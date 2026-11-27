@@ -28,7 +28,7 @@ public class BlueAuto1 extends LinearOpMode {
     private DcMotor rightBackDrive  = null;
 
     // Intake Motor
-    private DcMotor intakeMotor     = null;
+    //uncomment later private DcMotor intakeMotor     = null;
 
     private final ElapsedTime runtime = new ElapsedTime();
 
@@ -41,7 +41,7 @@ public class BlueAuto1 extends LinearOpMode {
 
     // Speed Settings
     static final double DRIVE_SPEED  = 0.6;
-    static final double INTAKE_POWER = 0.8;
+    //uncomment later static final double INTAKE_POWER = 0.8;
 
     @Override
     public void runOpMode() {
@@ -59,7 +59,7 @@ public class BlueAuto1 extends LinearOpMode {
         rightBackDrive  = hardwareMap.get(DcMotor.class, "right_back_drive");
 
         // Expansion Hub Motor Port 0
-        intakeMotor     = hardwareMap.get(DcMotor.class, "intake_motor");
+        //uncomment later intakeMotor     = hardwareMap.get(DcMotor.class, "intake_motor");
 
         // Motor Directions
         // Front faces RIGHT on screen. Reversing left drive motors ensures forward moves robot Right on screen.
@@ -68,14 +68,14 @@ public class BlueAuto1 extends LinearOpMode {
         rightFrontDrive.setDirection(DcMotorSimple.Direction.FORWARD);
         rightBackDrive.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        //uncomment later intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Zero Power Behavior
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        //uncomment later intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         resetEncoders();
 
@@ -102,7 +102,7 @@ public class BlueAuto1 extends LinearOpMode {
             // -------------------------------------------------------------------------------
             telemetry.addData("Auto Phase", "2/8: Moving Right into Wall & Intaking");
             telemetry.update();
-            setIntakePower(INTAKE_POWER);
+            //uncomment later setIntakePower(INTAKE_POWER);
             driveInches(DRIVE_SPEED, 28.0, 4.0); // Drive forward (right on screen into wall)
 
             // -------------------------------------------------------------------------------
@@ -111,7 +111,7 @@ public class BlueAuto1 extends LinearOpMode {
             telemetry.addData("Auto Phase", "3/8: Moving to Shooting Position & Shooting");
             telemetry.update();
             driveInches(DRIVE_SPEED, -20.0, 4.0); // Move back towards goal alignment
-            setIntakePower(0.0);
+            //uncomment later setIntakePower(0.0);
             estimateShootingSequence(3, "Intaked Pollen from Wall"); // ~2.3s estimated time
 
             // -------------------------------------------------------------------------------
@@ -120,7 +120,7 @@ public class BlueAuto1 extends LinearOpMode {
             telemetry.addData("Auto Phase", "4/8: Moving to Bottom Flower & Intaking");
             telemetry.update();
             strafeInches(DRIVE_SPEED, 48.0, 5.0); // Strafe right in robot frame = Down on screen
-            setIntakePower(INTAKE_POWER);
+            //uncomment later setIntakePower(INTAKE_POWER);
             driveInches(0.4, 12.0, 3.0); // Drive into flower elements to intake
 
             // -------------------------------------------------------------------------------
@@ -130,7 +130,7 @@ public class BlueAuto1 extends LinearOpMode {
             telemetry.update();
             driveInches(DRIVE_SPEED, -12.0, 3.0);
             strafeInches(DRIVE_SPEED, -48.0, 5.0); // Strafe left in robot frame = Up on screen to goal
-            setIntakePower(0.0);
+            //uncomment later setIntakePower(0.0);
             estimateShootingSequence(3, "Pollen from Bottom Flower"); // ~2.3s estimated time
 
             // -------------------------------------------------------------------------------
@@ -139,7 +139,7 @@ public class BlueAuto1 extends LinearOpMode {
             telemetry.addData("Auto Phase", "6/8: Moving to Right Flower & Intaking");
             telemetry.update();
             strafeInches(DRIVE_SPEED, 24.0, 4.0); // Strafe down towards right flower area
-            setIntakePower(INTAKE_POWER);
+            //uncomment later setIntakePower(INTAKE_POWER);
             driveInches(DRIVE_SPEED, 24.0, 4.0); // Drive forward (right on screen) into flower
 
             // -------------------------------------------------------------------------------
@@ -149,7 +149,7 @@ public class BlueAuto1 extends LinearOpMode {
             telemetry.update();
             driveInches(DRIVE_SPEED, -24.0, 4.0); // Drive back away from right wall
             strafeInches(DRIVE_SPEED, -24.0, 4.0); // Move in front of goal
-            setIntakePower(0.0);
+            //uncomment later setIntakePower(0.0);
             estimateShootingSequence(3, "Pollen from Right Flower"); // ~2.3s estimated time
 
             // -------------------------------------------------------------------------------
@@ -236,11 +236,11 @@ public class BlueAuto1 extends LinearOpMode {
     /**
      * Controls intake motor power.
      */
-    private void setIntakePower(double power) {
-        if (intakeMotor != null) {
-            intakeMotor.setPower(power);
-        }
-    }
+    //uncomment later private void setIntakePower(double power) {
+    //uncomment later     if (intakeMotor != null) {
+    //uncomment later         intakeMotor.setPower(power);
+    //uncomment later     }
+    //uncomment later }
 
     /**
      * Placeholder method to estimate shooter execution time without shooter hardware code.
@@ -277,6 +277,6 @@ public class BlueAuto1 extends LinearOpMode {
 
     private void stopRobot() {
         stopDriveMotors();
-        setIntakePower(0);
+        //uncomment later setIntakePower(0);
     }
 }
