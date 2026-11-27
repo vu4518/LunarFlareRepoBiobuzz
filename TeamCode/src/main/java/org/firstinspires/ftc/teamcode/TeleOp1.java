@@ -14,6 +14,8 @@ import java.util.TreeMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+
 @TeleOp(name = "TeleOp1", group = "Linear Opmode")
 
 
@@ -479,7 +481,7 @@ public class TeleOp1 extends LinearOpMode {
 
             intake.setPower(intakePower);
             transfer.setPower(intakePower);
-            if (Math.abs(transfer.getPower())>=0.1&Math.abs(transfer.getVelocity())<=20||!sequenceOn){
+            if (Math.abs(transfer.getPower())>=0.1&Math.abs(transfer.getCurrent(CurrentUnit.AMPS))>=5&sequenceOn){
                 transfer.setPower(intakePower*0.2);
             }
 
