@@ -53,7 +53,7 @@ public class TeleOp1 extends LinearOpMode {
     // ARM SETTINGS
     private static final double ARM_REFERENCE_POSITION = 0.5;
     private static final double ARM_SERVO_RANGE = 360.0;
-    private static final double ARM_START_ANGLE = 60.0;
+    private static final double ARM_START_ANGLE = 65.0;
     private static final double ARM_MAX_CCW_ANGLE = ARM_START_ANGLE;
     private static final double ARM_SPEED = 45.0;
 
@@ -69,7 +69,7 @@ public class TeleOp1 extends LinearOpMode {
     // Driver 2 automatic sequence
     private boolean sequenceOn = false;
 
-    // Flywheel starts OFF. Driver 2 RT toggles it ON/OFF.
+    // Driver 2 LT toggles passive flywheel revving.
 
 
 
@@ -90,6 +90,7 @@ public class TeleOp1 extends LinearOpMode {
 
     private ElapsedTime rampTimer = new ElapsedTime();
     static  TreeMap<Double, Double> SHOT_TABLE = new TreeMap<>();
+    static double shotMultiplier = 1.0;
 
     @Override
     public void runOpMode() {
@@ -97,16 +98,17 @@ public class TeleOp1 extends LinearOpMode {
         double startX = 36;
         double startY = 12;
         double startHeading = 0;
-        double[] hiveX = {66,66};
+        double[] hiveX = {72,72};
         double[] hiveY = {60, 84};
-        SHOT_TABLE.put(18.0, 1830.0);
-        SHOT_TABLE.put(24.0, 1840.0);
-        SHOT_TABLE.put(30.0, 1850.0);
-        SHOT_TABLE.put(36.0, 1895.0);
-        SHOT_TABLE.put(39.0, 1920.0);
-        SHOT_TABLE.put(45.0, 1970.0);
-        SHOT_TABLE.put(54.0, 2000.0);
-        SHOT_TABLE.put(60.0, 2090.0);
+        SHOT_TABLE.put(18.0, 1800.0);
+        SHOT_TABLE.put(24.0, 1820.0);
+        SHOT_TABLE.put(30.0, 1840.0);
+        SHOT_TABLE.put(36.0, 1885.0);
+        SHOT_TABLE.put(39.0, 1910.0);
+        SHOT_TABLE.put(45.0, 1950.0);
+        SHOT_TABLE.put(54.0, 1970.0);
+        SHOT_TABLE.put(60.0, 1990.0);
+        SHOT_TABLE.put(66.0, 2020.0);
         leftFrontDrive = hardwareMap.get(DcMotorEx.class, "left_front_drive");
         leftBackDrive = hardwareMap.get(DcMotorEx.class, "left_back_drive");
         rightFrontDrive = hardwareMap.get(DcMotorEx.class, "right_front_drive");
@@ -133,9 +135,9 @@ public class TeleOp1 extends LinearOpMode {
         intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Mechanism motor directions
-        transfer.setDirection(DcMotor.Direction.FORWARD);
+        transfer.setDirection(DcMotor.Direction.REVERSE);
         flywheel.setDirection(DcMotor.Direction.REVERSE);
-        intake.setDirection(DcMotor.Direction.REVERSE);
+        intake.setDirection(DcMotor.Direction.FORWARD);
         turret.setDirection(DcMotor.Direction.REVERSE);
 
         pinpoint = hardwareMap.get(
@@ -193,7 +195,7 @@ public class TeleOp1 extends LinearOpMode {
 
         arm.setPosition(initialArmPosition);
 
-        // Keep the flywheel OFF until Driver 2 presses RT.
+        // Keep the flywheel OFF until Driver 2 presses LT.
         flywheelon = false;
         flywheel.setVelocity(0.0);
 
@@ -223,7 +225,11 @@ public class TeleOp1 extends LinearOpMode {
         double targetHiveX = 72;
         double targetHiveY = 72;
         boolean previousLeftTrigger2 = false;
-
+        ElapsedTime sequenceTimer = new ElapsedTime();
+        final double SEQUENCE_DURATION = 3.5;
+        final double FLYWHEEL_BOOST_DELAY = 1.0;
+        double boostMultiplier = 3.0;
+        double FLYWHEEL_MAX_RPM = 4500.0;
         while (opModeIsActive()) {
             //Odometry stuff
             pinpoint.update();
@@ -354,16 +360,16 @@ public class TeleOp1 extends LinearOpMode {
 
             boolean rightTrigger2 = gamepad2.right_trigger > 0.5;
 
-            if (rightTrigger2 && !previousRightTrigger2) {
+            if (rightTrigger2 && !previousRightTrigger2 && !sequenceOn) {
 
-                sequenceOn = !sequenceOn;
-                flywheelon = !flywheelon;
+                sequenceOn = true;
+                sequenceTimer.reset();
 
-                // Reset manual intake override when sequence toggles
+                // Reset manual intake override when sequence starts
                 driver1IntakeOverride = false;
                 intakeMode = 0;
             }
-            boolean previousrightTrigger2 = rightTrigger2;
+            previousRightTrigger2 = rightTrigger2;
 
             boolean leftTrigger2 = gamepad2.left_trigger > 0.5;
 
@@ -371,8 +377,11 @@ public class TeleOp1 extends LinearOpMode {
                 flywheelon = !flywheelon;
             }
 
-            boolean previousleftTrigger2 = leftTrigger2;
+            previousLeftTrigger2 = leftTrigger2;
 
+            if (sequenceOn && sequenceTimer.seconds() >= SEQUENCE_DURATION) {
+                sequenceOn = false;
+            }
 
             // =====================================
             // SHARED TIMER
@@ -480,28 +489,35 @@ public class TeleOp1 extends LinearOpMode {
             }
 
             intake.setPower(intakePower);
-            transfer.setPower(intakePower);
-            if (Math.abs(transfer.getPower())>=0.1&Math.abs(transfer.getCurrent(CurrentUnit.AMPS))>=5&sequenceOn){
-                transfer.setPower(intakePower*0.2);
+            if (Math.abs(transfer.getPower())>=0.1&Math.abs(transfer.getCurrent(CurrentUnit.AMPS))>=0.4&sequenceOn){
+                transfer.setPower(0);
+            }else{
+                transfer.setPower(-intakePower);
+
             }
 
             // =====================================
             // FLYWHEEL POWER
             // =====================================
-            if (flywheelon){
-                flywheeltargetrpm = flywheelinputrpm;
-                if (sequenceOn){
-                    calculatedRpm = interpolateAngle(calculateDistance(xcoords,ycoords,targetHiveX,targetHiveY));
-                    flywheeltargetrpm = calculatedRpm;
+            if (flywheelon || sequenceOn) {
+                calculatedRpm = interpolateAngle(calculateDistance(
+                        xcoords, ycoords, targetHiveX, targetHiveY
+                ));
+                flywheeltargetrpm = calculatedRpm;
+
+                // After the delay, boost to maximum RPM for the rest of the sequence.
+                if (sequenceOn && sequenceTimer.seconds() >= FLYWHEEL_BOOST_DELAY) {
+                    FLYWHEEL_MAX_RPM = Math.pow(sequenceTimer.seconds()/3.0,0.28)*calculatedRpm*boostMultiplier;
+                    flywheeltargetrpm = FLYWHEEL_MAX_RPM;
                 }
-            }else{
+            } else {
                 flywheeltargetrpm = 0;
             }
-            flywheelvelocitytps = flywheeltargetrpm*flywheelcpr/60;
-            flywheelactualrpm = (flywheel.getVelocity()*60)/flywheelcpr;
+
+            flywheelvelocitytps = flywheeltargetrpm * flywheelcpr / 60.0;
+            flywheelactualrpm = (flywheel.getVelocity() * 60.0) / flywheelcpr;
+
             flywheel.setVelocity(flywheelvelocitytps);
-
-
 
 
             // =====================================
@@ -537,6 +553,16 @@ public class TeleOp1 extends LinearOpMode {
             targetTurretAngle = calculateTurretAngle(xcoords,ycoords,heading,targetHiveX,targetHiveY);
 
             //goofy ass math but its just to slow down as you get closer to the target
+            final double TURRET_LIMIT = 175.0;
+            final double TURRET_MAX_POWER = 0.35;
+            final double TURRET_MIN_POWER = 0.06;
+            final double TURRET_DEADZONE = 2.5;
+
+// Keep the target within the turret's permitted travel.
+            targetTurretAngle = Math.max(-TURRET_LIMIT,
+                    Math.min(TURRET_LIMIT, targetTurretAngle));
+
+// Calculate error.
             double turretError = targetTurretAngle - turretAngle;
 
             while (turretError > 180) {
@@ -547,15 +573,27 @@ public class TeleOp1 extends LinearOpMode {
                 turretError += 360;
             }
 
-            turretSpeed = Math.max(0.1, Math.min(1.0,
-                    Math.abs(turretError) / 60.0));
+// Proportional speed control.
+            turretSpeed = Math.min(TURRET_MAX_POWER,
+                    Math.max(TURRET_MIN_POWER, Math.abs(turretError) * 0.012));
 
-            if (Math.abs(turretError) >= 5) {
-                turret.setPower(Math.signum(turretError) * turretSpeed);
-            } else {
-                turret.setPower(0);
+            double turretPower = 0;
+
+            if (Math.abs(turretError) >= TURRET_DEADZONE) {
+                turretPower = Math.signum(turretError) * turretSpeed;
             }
 
+// Prevent powered movement farther into either travel limit.
+            if (turretAngle >= TURRET_LIMIT && turretPower > 0) {
+                turretPower = 0;
+            }
+
+            if (turretAngle <= -TURRET_LIMIT && turretPower < 0) {
+                turretPower = 0;
+            }
+
+            turret.setPower(turretPower);
+            //flywheel.setVelocity(6000*flywheelcpr/60);
 
 
             //turret.setPower(turretInput * TURRET_POWER);
@@ -603,6 +641,11 @@ public class TeleOp1 extends LinearOpMode {
             telemetry.addData("Turret Speed", turretSpeed);
             telemetry.addData("Calculated Distance", calculateDistance(xcoords,ycoords,targetHiveX,targetHiveY));
             telemetry.addData("Calculated RPM", calculatedRpm);
+            telemetry.addData("Interpolate Function Test", interpolateAngle(56));
+
+
+            telemetry.addData("Transfer Friction", transfer.getCurrent(CurrentUnit.AMPS));
+
             telemetry.addData("X (inches)",
                     xcoords);
 
@@ -673,7 +716,7 @@ public class TeleOp1 extends LinearOpMode {
         double a1 = lower.getValue();
         double d2 = upper.getKey();
         double a2 = upper.getValue();
-        return a1 +(distance - d1)* (a2 - a1)/ (d2 - d1);
+        return shotMultiplier*(a1 +(distance - d1)* (a2 - a1)/ (d2 - d1));
     }
     public static double calculateDistance(
             double robotX,
